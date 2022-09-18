@@ -23,7 +23,7 @@ $( document ).ready(function() {
       output: outputLayer
     });
   
-    var learningRate = .4;
+    var learningRate = .8;
     
     setInterval(function(){
         render();
@@ -129,7 +129,7 @@ $( document ).ready(function() {
       }
       
     });
-  }, 100);
+  }, 10);
   
   let player_data = {
     x : 15,
