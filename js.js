@@ -164,10 +164,8 @@ $( document ).ready(function() {
               if(element.details.x > obj.details.x && element.details.x < (obj.details.x + obj.details.w)){
                 color = "#880808";
                 // Danger zone
-                if(element.details.y < 50){
-                  myNetwork.activate([1,1, element.details.y]);  
-                  myNetwork.propagate(learningRate, [1]); 
-                }
+                myNetwork.activate([1,1, element.details.y]);  
+                myNetwork.propagate(learningRate, [1]); 
 
                 // console.log("Predict =>1 ", myNetwork.activate([1,1]));
 
@@ -182,10 +180,8 @@ $( document ).ready(function() {
                   }
                 }
               }else{
-                if(element.details.y > 100){
-                  myNetwork.activate([0,0, element.details.y]);  
-                  myNetwork.propagate(learningRate, [0]); 
-                }
+                myNetwork.activate([0,0, element.details.y]);  
+                myNetwork.propagate(learningRate, [0]); 
 
               }
             }
