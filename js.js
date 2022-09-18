@@ -3,28 +3,32 @@ $( document ).ready(function() {
     var ctx = c.getContext("2d");
     
     let alive = [];
+
+    const { Layer, Network } = window.synaptic;
+
+    var inputLayer = new Layer(2);
+    var hiddenLayer = new Layer(3);
+    var outputLayer = new Layer(1);
+  
+    inputLayer.project(hiddenLayer);
+    hiddenLayer.project(outputLayer);
+  
+    var myNetwork = new Network({
+      input: inputLayer,
+      hidden: [hiddenLayer],
+      output: outputLayer
+    });
+  
+    var learningRate = .3;
     
     setInterval(function(){
         render();
         
     }, 10);
+
+
     
-  //   setInterval(function(){
-  //     setInterval(function(){
-  //       let fireBall_data = {}
-  //       fireBall_data.radius      = 7;
-  //       fireBall_data.x           = player.details.x + (player.details.w/2)
-  //       fireBall_data.y           = player.details.y - (fireBall_data.radius*2)
-  //       fireBall_data.color       = "green";
-  //       fireBall_data.borderColor = "#003300";
-  //       fireBall_data.direction   = "up"; 
-  
-  //       var fireBall = new FireBall(fireBall_data, "red")
-  //       alive.push(fireBall)
-  //       // console.log("time",Math.floor(Math.random() * 10))
-  //     }, Math.floor(Math.random*10));
-      
-  // }, 5000);
+
     
     class FireBall {
       constructor(details, color) {
@@ -71,7 +75,6 @@ $( document ).ready(function() {
       draw() {
         if(this.alive){
         
-        console.log(this.redZone)
         if(!this.redZone){
           if(this.direction == "right"){
             this.details.x += this.details.vel
@@ -118,6 +121,7 @@ $( document ).ready(function() {
   player.draw()
   alive.push(player)
      
+  
   function render(){
     ctx.clearRect(0, 0, c.width, c.height);
     
@@ -132,7 +136,6 @@ $( document ).ready(function() {
           if(element.details.x <= 0){
             element.direction = "right"; 
           }
-          
           break;
           
         case "ball":
@@ -147,17 +150,58 @@ $( document ).ready(function() {
         default:
           break;
       }
-
-      
     });
     
-    alive.forEach(element => {
+    alive.forEach(obj => {
+      obj.draw();
+
+      if(obj.type == "player"){
+        if(obj.sensor){
+        
+          let color = "black";
+          alive.forEach(element => {
+            if(element.type == "ball"){
+              if(element.details.x > obj.details.x && element.details.x < (obj.details.x + obj.details.w)){
+                color = "#880808";
+                // Danger zone
+                if(element.details.y < 50){
+                  myNetwork.activate([1,1, element.details.y]);  
+                  myNetwork.propagate(learningRate, [1]); 
+                }
+
+                // console.log("Predict =>1 ", myNetwork.activate([1,1]));
+
+                let predict = myNetwork.activate([1,1, element.details.y]);
+                if(predict > 0.5){
+                  console.log("Prediction", predict);
+                  if(enemy.direction == "right"){
+                      enemy.direction = "left";
+                      state = false;
+                  }else if(enemy.direction == "left"){
+                    enemy.direction = "right";
+                  }
+                }
+              }else{
+                if(element.details.y > 100){
+                  myNetwork.activate([0,0, element.details.y]);  
+                  myNetwork.propagate(learningRate, [0]); 
+                }
+
+              }
+            }
+
+          });
       
-      element.draw()
+          ctx.fillStyle = color;
+          ctx.fillRect(obj.details.x, obj.details.y + obj.details.h, obj.details.w, c.height)
+          
+        }
+      }
     });
    
 
 }
+
     
   document.addEventListener('keydown', (event) => {
       let name = event.key;
@@ -179,8 +223,32 @@ $( document ).ready(function() {
         fireBall_data.borderColor = "#003300";
         fireBall_data.direction   = "up"; 
   
-        var fireBall = new FireBall(fireBall_data, "red")
-        alive.push(fireBall)
+        var fireBall = new FireBall(fireBall_data, "red");
+        alive.push(fireBall);
+
+        var data = ctx.getImageData(c.width, c.height, 1, 1).data;
       }
     }, false);
+
+
+
+for (var i = 0; i < 100000; i++) {  
+  myNetwork.activate([0,0]);  
+  myNetwork.propagate(learningRate, [0]);
+
+  myNetwork.activate([0,1]);  
+  myNetwork.propagate(learningRate, [1]);
+
+  myNetwork.activate([1,0]);  
+  myNetwork.propagate(learningRate, [1]);
+
+  myNetwork.activate([1,1]);  
+  myNetwork.propagate(learningRate, [0]);  
+}
+
+  console.log(myNetwork.activate([0,0]));   
+  console.log(myNetwork.activate([0,1]));  
+  console.log(myNetwork.activate([1,0]));  
+  console.log(myNetwork.activate([1,1]));
+
 });
