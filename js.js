@@ -115,21 +115,43 @@ $( document ).ready(function() {
   
     
   setInterval(function(){
+    let right = 0;
+    let left  = 0;
     alive.forEach(element => {
       if(element.type == "ball"){
-        if(element.details.x > enemy.details.x && element.details.x < (enemy.details.x + enemy.details.w)){
+        // if(element.details.x > enemy.details.x && element.details.x < (enemy.details.x + enemy.details.w)){
+          // let distance = Math.sqrt( parseInt((element.details.x - enemy.details.x) / c_width)**2 + parseInt(((element.details.y - enemy.details.y)/ c_height)**2));
+          if(element.details.x > (enemy.details.x  + (enemy.details.w/2) )){
+            // Turn left
+            left += 1;
 
-          let predict = myNetwork.activate([ parseInt(element.details.x / c_width), parseInt(((element.details.y - enemy.details.y)/c_height)**2)] );
+           } 
+           
+           if (element.details.x < (enemy.details.x + (enemy.details.w/2) ) ){
+            // Turn right
+            right += 1;
+          
+           }
+          
+          }
+          
+          // }
+          
+        });
+        
+        if(left > 0 || right > 0){
+          let predict = myNetwork.activate([ left, right ]);
+          console.log("predict =>", predict, left, right);
+        
           if(predict > 0.5){        
                 enemy.direction = "left";
             }else{
                 enemy.direction = "right";
             }
-          }
-          
-      }
       
-    });
+        }
+        
+    
   }, 10);
   
   let player_data = {
@@ -138,7 +160,7 @@ $( document ).ready(function() {
     w : 50,
     h : 15,
     direction: "right",
-    vel : 3,
+    vel : 5,
     sensor: false,
     color:"red"
   }
@@ -185,22 +207,27 @@ $( document ).ready(function() {
         if(obj.sensor){
         
           let color = "black";
+          let right = 0;
+          let left  = 0;
           alive.forEach(ball => {
             if(ball.type == "ball"){
+              // let distance = Math.sqrt( parseInt((ball.details.x - enemy.details.x) / c_width)**2 + parseInt(((ball.details.y - enemy.details.y)/c_height)**2));
+              if(ball.details.x > (enemy.details.x  + (enemy.details.w/2) )){
+               // Turn left
+               left += 1;
+
+              } 
+              
+              if (ball.details.x < (enemy.details.x + (enemy.details.w/2) ) ){
+               // Turn right
+               right += 1;
+             
+              }
+              
               if(ball.details.x > obj.details.x && ball.details.x < (obj.details.x + obj.details.w)){
                 color = "#8A1800";
                 // Danger zone
-               if(ball.details.x > obj.details.x && ball.details.x < ( obj.details.x + (obj.details.w/2) )){
-                // Turn right
-                 myNetwork.activate([parseInt(ball.details.x / c_width), parseInt(((ball.details.y - enemy.details.y)/c_height)**2)]);  
-                 myNetwork.propagate(learningRate, [1]);   
-                    
-               }else if (ball.details.x < (obj.details.x + obj.details.width) && ball.details.x > (obj.details.x + (obj.details.w/2)) ){
-                // Turn left
-                myNetwork.activate([parseInt(ball.details.x / c_width), parseInt(((ball.details.y - enemy.details.y)/c_height)**2)]);  
-                myNetwork.propagate(learningRate, [0]);   
-              
-               }
+ 
                
                if(ball.details.x > enemy.details.x && ball.details.x < (enemy.details.x + enemy.details.w)){
                 if(ball.details.y > enemy.details.y && ball.details.y < (enemy.details.y + enemy.details.h)){
@@ -217,6 +244,23 @@ $( document ).ready(function() {
             }
 
           });
+          
+          console.log(left, right)
+          if(left > 0 || right > 0){
+            if(right > left){
+              // Turn left
+              console.log("left");
+              myNetwork.activate([ left, right ]);  
+              myNetwork.propagate(learningRate, [0]);  
+            }else{
+              // Turn right
+              console.log("right");
+              myNetwork.activate([ left, right ]);  
+              myNetwork.propagate(learningRate, [1]);  
+            }
+            
+          }
+          
       
           ctx.fillStyle = color;
           ctx.fillRect(obj.details.x, obj.details.y + obj.details.h, obj.details.w, c.height)
