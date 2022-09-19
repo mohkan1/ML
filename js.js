@@ -4,6 +4,7 @@ $( document ).ready(function() {
     c.height = screen.height/1.5;
 
     c_height = c.height;
+    c_width = c.width;
 
     var ctx = c.getContext("2d");
     
@@ -11,7 +12,7 @@ $( document ).ready(function() {
 
     const { Layer, Network } = window.synaptic;
 
-    var inputLayer = new Layer(1);
+    var inputLayer = new Layer(2);
     var hiddenLayer = new Layer(3);
     var outputLayer = new Layer(1);
   
@@ -30,8 +31,7 @@ $( document ).ready(function() {
     setInterval(function(){
         render();
     }, 10);
-    
-
+  
     
     class FireBall {
       constructor(details, color) {
@@ -50,6 +50,7 @@ $( document ).ready(function() {
         }else{
           this.details.y += 1;
         }
+        
         ctx.arc(this.details.x, this.details.y, this.details.radius, 0, 2 * Math.PI, false);
         
         ctx.fillStyle = this.details.color;
@@ -64,9 +65,9 @@ $( document ).ready(function() {
     
     class Player{
 
-      constructor(details, color) {
+      constructor(details) {
         this.details   = details
-        this.color     = color
+        this.color     = this.details.color
         this.fire      = false
         this.type      = "player"
         this.alive     = true
@@ -89,7 +90,7 @@ $( document ).ready(function() {
 
         }
           
-          ctx.fillStyle = this.color
+          ctx.fillStyle = this.details.color
           ctx.fillRect(this.details.x, this.details.y, this.details.w, this.details.h)
         }
       }
@@ -101,12 +102,13 @@ $( document ).ready(function() {
       w : 50,
       h : 15,
       direction: "left",
-      vel : 5,
-      sensor: true
+      vel : 2,
+      sensor: true,
+      color: "blue"
   }
   
 
-  let enemy = new Player(enemy_data, "blue")
+  let enemy = new Player(enemy_data)
   enemy.draw()
   alive.push(enemy);
   
@@ -117,17 +119,14 @@ $( document ).ready(function() {
       if(element.type == "ball"){
         if(element.details.x > enemy.details.x && element.details.x < (enemy.details.x + enemy.details.w)){
 
-          let predict = myNetwork.activate([ ((element.details.y - enemy.details.y)/c_height)**2 ]);
-          console.log("Prediction", predict);
+          let predict = myNetwork.activate([ parseInt(element.details.x / c_width), parseInt(((element.details.y - enemy.details.y)/c_height)**2)] );
           if(predict > 0.5){        
-            if(enemy.direction == "right"){
                 enemy.direction = "left";
-            }else if(enemy.direction == "left"){
+            }else{
                 enemy.direction = "right";
             }
           }
           
-        }
       }
       
     });
@@ -139,11 +138,12 @@ $( document ).ready(function() {
     w : 50,
     h : 15,
     direction: "right",
-    vel : 10,
-    sensor: false
+    vel : 3,
+    sensor: false,
+    color:"red"
   }
 
-  let player = new Player(player_data, "red")
+  let player = new Player(player_data)
   player.draw()
   alive.push(player)
      
@@ -185,20 +185,35 @@ $( document ).ready(function() {
         if(obj.sensor){
         
           let color = "black";
-          alive.forEach(element => {
-            if(element.type == "ball"){
-              if(element.details.x > obj.details.x && element.details.x < (obj.details.x + obj.details.w)){
+          alive.forEach(ball => {
+            if(ball.type == "ball"){
+              if(ball.details.x > obj.details.x && ball.details.x < (obj.details.x + obj.details.w)){
                 color = "#8A1800";
                 // Danger zone
-                myNetwork.activate([((element.details.y - enemy.details.y)/c_height)**2]);  
-                myNetwork.propagate(learningRate, [1]);   
-                   
-              }
-              // else{
-              //   myNetwork.activate([element.details.x, element.details.y]);  
-              //   myNetwork.propagate(learningRate, [0]); 
+               if(ball.details.x > obj.details.x && ball.details.x < ( obj.details.x + (obj.details.w/2) )){
+                // Turn right
+                 myNetwork.activate([parseInt(ball.details.x / c_width), parseInt(((ball.details.y - enemy.details.y)/c_height)**2)]);  
+                 myNetwork.propagate(learningRate, [1]);   
+                    
+               }else if (ball.details.x < (obj.details.x + obj.details.width) && ball.details.x > (obj.details.x + (obj.details.w/2)) ){
+                // Turn left
+                myNetwork.activate([parseInt(ball.details.x / c_width), parseInt(((ball.details.y - enemy.details.y)/c_height)**2)]);  
+                myNetwork.propagate(learningRate, [0]);   
+              
+               }
+               
+               if(ball.details.x > enemy.details.x && ball.details.x < (enemy.details.x + enemy.details.w)){
+                if(ball.details.y > enemy.details.y && ball.details.y < (enemy.details.y + enemy.details.h)){
+            
+                  enemy.details.color = "white"; 
+                }else{
+                  enemy.details.color = "blue"; 
 
-              // }
+                }
+                  
+               }
+               
+              }
             }
 
           });
@@ -237,25 +252,10 @@ $( document ).ready(function() {
   
         var fireBall = new FireBall(fireBall_data, "red");
         alive.push(fireBall);
-        console.log("hiddenLayer", hiddenLayer);
 
       
 
       }
     }, false);
-
-  //   setInterval(function(){
-  //     let fireBall_data = {}
-  //     fireBall_data.radius      = 7;
-  //     fireBall_data.x           = player.details.x + (player.details.w/2)
-  //     fireBall_data.y           = player.details.y - (fireBall_data.radius*2)
-  //     fireBall_data.color       = "green";
-  //     fireBall_data.borderColor = "#003300";
-  //     fireBall_data.direction   = "up"; 
-
-  //     var fireBall = new FireBall(fireBall_data, "red");
-  //     alive.push(fireBall);
-  // }, 500);
-
 
 });
