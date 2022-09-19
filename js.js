@@ -1,7 +1,9 @@
 $( document ).ready(function() {
-    var c = document.getElementById("myCanvas");
+    let c = document.getElementById("myCanvas");
     c.width = screen.width/1.1;
-    c.height = screen.height/1.2;
+    c.height = screen.height/1.5;
+
+    c_height = c.height;
 
     var ctx = c.getContext("2d");
     
@@ -9,7 +11,7 @@ $( document ).ready(function() {
 
     const { Layer, Network } = window.synaptic;
 
-    var inputLayer = new Layer(2);
+    var inputLayer = new Layer(1);
     var hiddenLayer = new Layer(3);
     var outputLayer = new Layer(1);
   
@@ -23,7 +25,7 @@ $( document ).ready(function() {
       output: outputLayer
     });
   
-    var learningRate = .8;
+    var learningRate = .3;
     
     setInterval(function(){
         render();
@@ -115,7 +117,7 @@ $( document ).ready(function() {
       if(element.type == "ball"){
         if(element.details.x > enemy.details.x && element.details.x < (enemy.details.x + enemy.details.w)){
 
-          let predict = myNetwork.activate([element.details.x, element.details.y]);
+          let predict = myNetwork.activate([ ((element.details.y - enemy.details.y)/c_height)**2 ]);
           console.log("Prediction", predict);
           if(predict > 0.5){        
             if(enemy.direction == "right"){
@@ -188,7 +190,7 @@ $( document ).ready(function() {
               if(element.details.x > obj.details.x && element.details.x < (obj.details.x + obj.details.w)){
                 color = "#8A1800";
                 // Danger zone
-                myNetwork.activate([element.details.x, element.details.y]);  
+                myNetwork.activate([((element.details.y - enemy.details.y)/c_height)**2]);  
                 myNetwork.propagate(learningRate, [1]);   
                    
               }
@@ -242,18 +244,18 @@ $( document ).ready(function() {
       }
     }, false);
 
-    setInterval(function(){
-      let fireBall_data = {}
-      fireBall_data.radius      = 7;
-      fireBall_data.x           = player.details.x + (player.details.w/2)
-      fireBall_data.y           = player.details.y - (fireBall_data.radius*2)
-      fireBall_data.color       = "green";
-      fireBall_data.borderColor = "#003300";
-      fireBall_data.direction   = "up"; 
+  //   setInterval(function(){
+  //     let fireBall_data = {}
+  //     fireBall_data.radius      = 7;
+  //     fireBall_data.x           = player.details.x + (player.details.w/2)
+  //     fireBall_data.y           = player.details.y - (fireBall_data.radius*2)
+  //     fireBall_data.color       = "green";
+  //     fireBall_data.borderColor = "#003300";
+  //     fireBall_data.direction   = "up"; 
 
-      var fireBall = new FireBall(fireBall_data, "red");
-      alive.push(fireBall);
-  }, 5);
+  //     var fireBall = new FireBall(fireBall_data, "red");
+  //     alive.push(fireBall);
+  // }, 500);
 
 
 });
