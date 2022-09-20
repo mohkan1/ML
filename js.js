@@ -145,9 +145,9 @@ $( document ).ready(function() {
         
           if(predict > 0.5){        
                 enemy.direction = "left";
-            }else{
-                enemy.direction = "right";
-            }
+          }else{
+              enemy.direction = "right";
+          }
       
         }
         
@@ -211,7 +211,7 @@ $( document ).ready(function() {
           let left  = 0;
           alive.forEach(ball => {
             if(ball.type == "ball"){
-              // let distance = Math.sqrt( parseInt((ball.details.x - enemy.details.x) / c_width)**2 + parseInt(((ball.details.y - enemy.details.y)/c_height)**2));
+              let distance = Math.sqrt( parseInt((ball.details.x - enemy.details.x) / c_width)**2 + parseInt(((ball.details.y - enemy.details.y)/c_height)**2));
               if(ball.details.x > (enemy.details.x  + (enemy.details.w/2) )){
                // Turn left
                left += 1;
@@ -227,11 +227,8 @@ $( document ).ready(function() {
               if(ball.details.x > obj.details.x && ball.details.x < (obj.details.x + obj.details.w)){
                 color = "#8A1800";
                 // Danger zone
- 
-               
                if(ball.details.x > enemy.details.x && ball.details.x < (enemy.details.x + enemy.details.w)){
                 if(ball.details.y > enemy.details.y && ball.details.y < (enemy.details.y + enemy.details.h)){
-            
                   enemy.details.color = "white"; 
                 }else{
                   enemy.details.color = "blue"; 
@@ -273,7 +270,7 @@ $( document ).ready(function() {
 }
 
     
-  document.addEventListener('keydown', (event) => {
+  document.addEventListener('keyup', (event) => {
       let name = event.key;
       let code = event.code;
       
