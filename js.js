@@ -5,7 +5,8 @@ $( document ).ready(function() {
 
     c_height = c.height;
     c_width = c.width;
-
+  
+    let render_time = 10;
     var ctx = c.getContext("2d");
     
     let alive = [];
@@ -13,9 +14,9 @@ $( document ).ready(function() {
     const { Layer, Network } = window.synaptic;
 
     var learningRate = .6;
-    var inputLayer_defense = new Layer(2);
+    var inputLayer_defense = new Layer(3);
     var hiddenLayer_defense = new Layer(3);
-    var outputLayer_defense = new Layer(1);
+    var outputLayer_defense = new Layer(2);
   
     var defense = new Network({
       input: inputLayer_defense,
@@ -59,9 +60,9 @@ $( document ).ready(function() {
       if(this.alive){
         ctx.beginPath();
         if(this.direction == "up"){
-        this.details.y -= Math.floor(Math.random()*10);
+        this.details.y -= this.details.vel;
         }else{
-          this.details.y += 1;
+          this.details.y += this.details.vel;
         }
         
         ctx.arc(this.details.x, this.details.y, this.details.radius, 0, 2 * Math.PI, false);
@@ -130,6 +131,7 @@ $( document ).ready(function() {
   setInterval(function(){
     let right = 0;
     let left  = 0;
+    let dangerZone_balls = 0;
     alive.forEach(element => {
       if(element.type == "ball"){
         // if(element.details.x > enemy.details.x && element.details.x < (enemy.details.x + enemy.details.w)){
@@ -145,6 +147,11 @@ $( document ).ready(function() {
             right += 1;
           
            }
+           
+           if(element.details.x > enemy.details.x && element.details.x < (enemy.details.x + enemy.details.w)){
+            dangerZone_balls+= 1;
+           }
+
           
           }
           
@@ -154,19 +161,26 @@ $( document ).ready(function() {
         
         if(left > 0 || right > 0){
 
-          let predict = defense.activate([ left, right ]);
-          console.log("predict defense =>", predict, left, right);
-        
-          if(predict > 0.5){        
-                enemy.direction = "left";
+          let predict = defense.activate([ left, right, dangerZone_balls]);
+          
+          if(predict[1] > 0.5){
+            enemy.direction = "";
           }else{
-              enemy.direction = "right";
-          }
+
+            if(predict[0] > 0.5){        
+                  enemy.direction = "left";
+            }else{
+                enemy.direction = "right";
+            }
+            
+          }        
+
+          
+        
       
         }else{
           let diff = (player.details.x - enemy.details.x)/c_width;
           let predict = follow.activate([ diff ]);
-          console.log("Predict follow => ", predict)
           if(predict > 0.5){        
             enemy.direction = "left";
           }else{
@@ -176,7 +190,7 @@ $( document ).ready(function() {
         }
         
     
-  }, 10);
+  }, render_time);
   
   let player_data = {
     x : 15,
@@ -184,7 +198,7 @@ $( document ).ready(function() {
     w : 50,
     h : 15,
     direction: "right",
-    vel : 5,
+    vel : 3,
     sensor: false,
     color:"red"
   }
@@ -233,6 +247,7 @@ $( document ).ready(function() {
           let color = "black";
           let right = 0;
           let left  = 0;
+          let dangerZone_balls = 0;
           alive.forEach(ball => {
             if(ball.type == "ball"){
               let distance = Math.sqrt( parseInt((ball.details.x - enemy.details.x) / c_width)**2 + parseInt(((ball.details.y - enemy.details.y)/c_height)**2));
@@ -250,6 +265,7 @@ $( document ).ready(function() {
               
               if(ball.details.x > obj.details.x && ball.details.x < (obj.details.x + obj.details.w)){
                 color = "#8A1800";
+                dangerZone_balls += 1;
                 // Danger zone
                if(ball.details.x > enemy.details.x && ball.details.x < (enemy.details.x + enemy.details.w)){
                 if(ball.details.y > enemy.details.y && ball.details.y < (enemy.details.y + enemy.details.h)){
@@ -266,24 +282,64 @@ $( document ).ready(function() {
 
           });
           
-          console.log(left, right)
           if(left > 0 || right > 0){
-            if(right > left){
-              // Turn left
-              console.log("left");
-              defense.activate([ left, right ]);  
-              defense.propagate(learningRate, [0]);  
+            if(dangerZone_balls == 0){
+              // Dont move
+              defense.activate([ left, right, dangerZone_balls]);  
+              defense.propagate(learningRate, [0, 1]);            
             }else{
-              // Turn right
-              console.log("right");
-              defense.activate([ left, right ]);  
-              defense.propagate(learningRate, [1]);  
+              
+              alive.forEach((ball, index) => {
+                if(ball.type == "ball"){
+                    ball_vel = ball.details.vel;
+                    ball_x = ball.details.x;
+                    ball_y = ball.details.y;
+                    delta_y = ball.details.y - (enemy.details.y + enemy.details.h); 
+                    delta_x = ball.details.x - (enemy.details.x + (enemy.details.w/2)); 
+                    if(delta_x > 0){
+                        ball_to_enemy_time = delta_y/ball_vel;
+                        enemy_to_ball_time = delta_x/enemy.details.vel + enemy.details.w + enemy.details.w*0.1;
+                        // console.log("ball_to_enemy_time => ", ball_to_enemy_time);
+                        // console.log("enemy_to_ball_time => ", enemy_to_ball_time);
+                        
+                        if(enemy_to_ball_time < ball_to_enemy_time){
+                          console.log("nearst right safe zone");
+                          defense.activate([ left, right, dangerZone_balls]);  
+                          defense.propagate(learningRate, [0, 0]);
+                        }
+                    }else{
+                      ball_to_enemy_time = delta_y/ball_vel;
+                      enemy_to_ball_time = delta_x/enemy.details.vel + enemy.details.w + enemy.details.w*0.1;
+
+                      if(enemy_to_ball_time < ball_to_enemy_time){
+                        console.log("nearst left safe zone");
+                        defense.activate([ left, right, dangerZone_balls]);  
+                        defense.propagate(learningRate, [1, 0]);
+                      }
+                
+                    }
+
+                }
+              
+              });
+
+
+
+              if(right > left){
+                // Turn left
+                defense.activate([ left, right, dangerZone_balls ]);  
+                defense.propagate(learningRate, [0, 0]);  
+              }else if (right > left){
+                // Turn right
+                defense.activate([ left, right, dangerZone_balls]);  
+                defense.propagate(learningRate, [1, 0]);  
+              }
+              
             }
             
           }else{
             
               let diff = (player.details.x - enemy.details.x)/c_width;
-              // console.log("folow learing => ", diff);
               if(player.details.x > enemy.details.x){
                 follow.activate([ diff ]);  
                 follow.propagate(learningRate, [0]);
@@ -291,7 +347,6 @@ $( document ).ready(function() {
                 follow.activate([ diff ]);  
                 follow.propagate(learningRate, [1]);
               }
-              // console.log("test", follow.activate([ diff ]))
 
           }
 
@@ -327,7 +382,15 @@ $( document ).ready(function() {
         fireBall_data.y           = player.details.y - (fireBall_data.radius*2)
         fireBall_data.color       = "green";
         fireBall_data.borderColor = "#003300";
-        fireBall_data.direction   = "up"; 
+        fireBall_data.direction   = "up";
+        
+        let random_vel = Math.floor(Math.random()*5);
+        while(random_vel < 2){
+          random_vel = Math.floor(Math.random()*5);
+        
+        }
+        
+        fireBall_data.vel = random_vel;
   
         var fireBall = new FireBall(fireBall_data, "red");
         alive.push(fireBall);
