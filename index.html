@@ -11,11 +11,37 @@
 
     <title>Document</title>
 </head>
-<body>
+
+<style>
+    
+    .center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .white {
+        color:white;
+    }
+
+    #myCanvas {
+    border-style: solid;
+    border-width: 10px;
+    border-color: green;
+    }
+
+</style>
+<body  style="background-image: url('https://t3.ftcdn.net/jpg/02/71/50/04/360_F_271500423_Ls3YOwFx6DqHy4nUvAV2P0G2UQwFeQaq.jpg');">
 
     <div class="row ml-0 mr-0">
-        <div class="col">
-            <canvas id="myCanvas" width="800" height="500" style="background-color:black;">
+        <div class="col center">
+            <h1 class="white">DangerZone</h1>
+        </div>
+    </div>
+
+    <div class="row ml-0 mr-0">
+        <div class="col center">
+            <canvas id="myCanvas" width="800" height="500" style="background-color:black;border-color:redx;">
         </div>
     </div>
     

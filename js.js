@@ -12,21 +12,34 @@ $( document ).ready(function() {
 
     const { Layer, Network } = window.synaptic;
 
-    var inputLayer = new Layer(2);
-    var hiddenLayer = new Layer(3);
-    var outputLayer = new Layer(1);
+    var learningRate = .6;
+    var inputLayer_defense = new Layer(2);
+    var hiddenLayer_defense = new Layer(3);
+    var outputLayer_defense = new Layer(1);
   
-    inputLayer.project(hiddenLayer);
-    hiddenLayer.project(outputLayer);
-    
-  
-    var myNetwork = new Network({
-      input: inputLayer,
-      hidden: [hiddenLayer],
-      output: outputLayer
+    var defense = new Network({
+      input: inputLayer_defense,
+      hidden: [hiddenLayer_defense],
+      output: outputLayer_defense
+    });
+
+
+    inputLayer_defense.project(hiddenLayer_defense);
+    hiddenLayer_defense.project(outputLayer_defense);
+
+    var inputLayer_follow = new Layer(1);
+    var hiddenLayer_follow = new Layer(3);
+    var outputLayer_follow = new Layer(1);
+
+    var follow = new Network({
+      input: inputLayer_follow,
+      hidden: [hiddenLayer_follow],
+      output: outputLayer_follow
     });
   
-    var learningRate = .3;
+    inputLayer_follow.project(hiddenLayer_follow);
+    hiddenLayer_follow.project(outputLayer_follow);
+
     
     setInterval(function(){
         render();
@@ -140,8 +153,9 @@ $( document ).ready(function() {
         });
         
         if(left > 0 || right > 0){
-          let predict = myNetwork.activate([ left, right ]);
-          console.log("predict =>", predict, left, right);
+
+          let predict = defense.activate([ left, right ]);
+          console.log("predict defense =>", predict, left, right);
         
           if(predict > 0.5){        
                 enemy.direction = "left";
@@ -149,6 +163,16 @@ $( document ).ready(function() {
               enemy.direction = "right";
           }
       
+        }else{
+          let diff = (player.details.x - enemy.details.x)/c_width;
+          let predict = follow.activate([ diff ]);
+          console.log("Predict follow => ", predict)
+          if(predict > 0.5){        
+            enemy.direction = "left";
+          }else{
+              enemy.direction = "right";
+          }
+
         }
         
     
@@ -247,16 +271,30 @@ $( document ).ready(function() {
             if(right > left){
               // Turn left
               console.log("left");
-              myNetwork.activate([ left, right ]);  
-              myNetwork.propagate(learningRate, [0]);  
+              defense.activate([ left, right ]);  
+              defense.propagate(learningRate, [0]);  
             }else{
               // Turn right
               console.log("right");
-              myNetwork.activate([ left, right ]);  
-              myNetwork.propagate(learningRate, [1]);  
+              defense.activate([ left, right ]);  
+              defense.propagate(learningRate, [1]);  
             }
             
+          }else{
+            
+              let diff = (player.details.x - enemy.details.x)/c_width;
+              // console.log("folow learing => ", diff);
+              if(player.details.x > enemy.details.x){
+                follow.activate([ diff ]);  
+                follow.propagate(learningRate, [0]);
+              }else{
+                follow.activate([ diff ]);  
+                follow.propagate(learningRate, [1]);
+              }
+              // console.log("test", follow.activate([ diff ]))
+
           }
+
           
       
           ctx.fillStyle = color;
